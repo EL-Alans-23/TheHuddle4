@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ERD — Pipeline de Libros</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 32px;
+    color: #000000;
+  }
+  #erd {
+    width: 100%;
+    max-width: 900px;
+  }
+  #erd svg {
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff;
+  }
+  #erd svg text,
+  #erd svg .label,
+  #erd svg .entityLabel,
+  #erd svg .attributeBoxOdd text,
+  #erd svg .attributeBoxEven text {
+    fill: #000000 !important;
+    color: #000000 !important;
+  }
+  #erd svg .er.entityBox,
+  #erd svg .er.attributeBoxOdd,
+  #erd svg .er.attributeBoxEven {
+    fill: #f5f5f5 !important;
+    stroke: #333333 !important;
+  }
+  #erd svg .er.entityHeadingLabel {
+    fill: #000000 !important;
+  }
+  #erd svg path,
+  #erd svg line,
+  #erd svg polyline {
+    stroke: #333333 !important;
+  }
+  #erd svg marker path {
+    fill: #333333 !important;
+    stroke: #333333 !important;
+  }
+</style>
+</head>
+<body>
+<h1>Diagrama ERD — Pipeline de Libros</h1>
+<div id="erd"></div>
+
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: 'Arial, sans-serif',
+  themeVariables: {
+    darkMode: false,
+    fontSize: '14px',
+    fontFamily: 'Arial, sans-serif',
+    primaryColor: '#f5f5f5',
+    primaryTextColor: '#000000',
+    primaryBorderColor: '#333333',
+    lineColor: '#333333',
+    textColor: '#000000',
+    background: '#ffffff',
+    mainBkg: '#f5f5f5',
+    nodeBorder: '#333333',
+    clusterBkg: '#ffffff',
+    titleColor: '#000000',
+    edgeLabelBackground: '#ffffff',
+    attributeBackgroundColorEven: '#eeeeee',
+    attributeBackgroundColorOdd: '#f5f5f5',
+  },
+});
+
+const diagram = `erDiagram
+  categorias {
+    INTEGER categoria_id PK
+    TEXT categoria_name
+  }
+  autores {
+    INTEGER autor_id PK
+    TEXT name
+    INTEGER ano_nacimiento
+    TEXT country
+    TEXT autor_key
+    INTEGER total_obras
+    TEXT api_source
+    TEXT fecha_creacion
+  }
+  libros {
+    INTEGER libro_id PK
+    TEXT titulo
+    NUMERIC precio
+    INTEGER rating
+    INTEGER categoria_id FK
+  }
+  libros_autores {
+    INTEGER libro_id FK
+    INTEGER autor_id FK
+  }
+  categorias ||--o{ libros : "categoria_id"
+  libros ||--o{ libros_autores : "libro_id"
+  autores ||--o{ libros_autores : "autor_id"
+`;
+
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
+</body>
+</html>
